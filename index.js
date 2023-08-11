@@ -43,10 +43,14 @@ const multerFilter = (req, file, cb) => {
   }
 };
 
+// mongodb+srv://drankitkumarthakur:MtcJwiuDf27C4Ny8@cluster0.k8wu6dh.mongodb.net/?retryWrites=true&w=majority
 // Connection
-connectToMongoDb("mongodb://127.0.0.1:27017/lft").then(() =>
-  console.log("MongoDb Connected!")
-);
+// connectToMongoDb("mongodb://127.0.0.1:27017").then(() =>
+//   console.log("MongoDb Connected!")
+// );
+connectToMongoDb(
+  "mongodb+srv://drankitkumarthakur:MtcJwiuDf27C4Ny8@cluster0.k8wu6dh.mongodb.net/?retryWrites=true&w=majority"
+).then(() => console.log("MongoDb Connected!"));
 
 // View Engine Declaration
 app.set("view engine", "ejs");

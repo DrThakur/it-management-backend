@@ -11,7 +11,8 @@ function checkForAuthenticationCookie(cookieName) {
       const userPayload = validateToken(tokenCookieValue);
       req.user = userPayload;
     } catch (error) {
-      res.send("Error Occured", error);
+      // res.send("Error Occured", error);
+      res.status(401).send("Authentication Error: " + error.message);
     }
     return next();
   };
