@@ -1,6 +1,6 @@
 const User = require("../models/user");
-// const csvParser = require("csv-parser");
-// const fs = require("fs");
+const csvParser = require("csv-parser");
+const fs = require("fs");
 // Get all users
 const getAllUsers = async (req, res) => {
   try {
@@ -175,6 +175,93 @@ const deleteMultipleUsersByIds = async (req, res) => {
 //   }
 // };
 
+// Function to validate and save the data to the database
+
+// Function to conditionally set required fields based on 'issuedTo' value
+function setRequiredFields(row) {
+  // Add 'email' and 'role' fields as required
+  if (!row.email || !row.role) {
+    throw new Error("Email and role are required fields");
+  }
+
+  // Rest of your logic for other fields
+  // ...
+
+  return row;
+}
+
+async function saveUserDataToDatabase(data) {
+  try {
+    // Check if the document already exists based on the assetCode and serviceTag
+    const existingUser = await User.findOne({
+      email: data.email,
+      employeeCode: data.employeeCode,
+    });
+
+    if (existingUser) {
+      // If the document already exists, do not save it again.
+      console.log(
+        `User with email: ${data.email} and employee Id: ${data.employeeId} already exists. Skipping...`
+      );
+    } else {
+      // If the document does not exist, create a new document
+      const user = new User(data);
+      await user.validate();
+      await user.save();
+      console.log("User Data saved successfully!");
+    }
+  } catch (error) {
+    console.error("Error saving data:", error.message);
+  }
+}
+
+const handleUserCSVdataToDatabase = async (req, res) => {
+  console.log("User data recieved in file form", req);
+  try {
+    // const jsonArray = await csv().fromFile(req.file.path);
+    const jsonArray = [];
+    // Map the CSV column headers to the Mongoose field names
+    const fieldMappings = {
+      "First Name": "firstName",
+      "Last Name": "lastName",
+      Username: "username",
+      Email: "email",
+      Password: "password",
+      "Phone Number": "phoneNumber",
+      Status: "status",
+      "Employee Code": "employeeCode",
+      Designation: "designation",
+      "Reporting Manager": "reportingManager",
+      Department: "department",
+      Location: "location",
+      Notes: "notes",
+      Role: "role",
+    };
+
+    fs.createReadStream(req.file.path)
+      .pipe(csvParser())
+      .on("data", (row) => {
+        const mappedRow = {};
+        for (const key in row) {
+          if (fieldMappings[key]) {
+            mappedRow[fieldMappings[key]] = row[key];
+          }
+        }
+        jsonArray.push(mappedRow);
+      })
+      .on("end", async () => {
+        for (const entry of jsonArray) {
+          const processedRow = setRequiredFields(entry);
+          await saveUserDataToDatabase(processedRow);
+        }
+      });
+    return res.json({ msg: "Added successfully to MongoDb" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Failed to add data to MongoDb" });
+  }
+};
+
 module.exports = {
   getAllUsers,
   createUser,
@@ -182,6 +269,7 @@ module.exports = {
   updateUserById,
   deleteUserById,
   deleteMultipleUsersByIds,
+  handleUserCSVdataToDatabase,
 };
 
 // if (!body) {

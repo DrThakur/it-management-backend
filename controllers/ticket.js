@@ -1,4 +1,6 @@
 const Ticket = require("../models/ticket");
+const transporter = require("../services/nodemailerConfig");
+const User = require("../models/user");
 
 // Get all tickets
 const getAllTickets = async (req, res) => {
@@ -31,7 +33,7 @@ initializeTicketCounter();
 // Create a new ticket
 
 const createTicket = async (req, res) => {
-  const body = req.body;
+  const { userId, ...body } = req.body;
   console.log("My Form Data", req.body);
 
   try {
@@ -80,13 +82,47 @@ const createTicket = async (req, res) => {
 
     console.log(req.user);
 
+    //fetching specific user
+    const user = await User.findById(userId); // Fetch user based on userId
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     // create new ticket
     const newTicket = new Ticket({
       ticketId,
       serialNumber,
+      createdBy: {
+        name: user.firstName + " " + user.lastName,
+        employeeId: user.employeeCode,
+        profilePicture: user.profilePicture,
+      },
       ...req.body,
     });
     await newTicket.save();
+
+    // Send an email Notification
+    const mailOptions = {
+      from: '"Ankit Kumar Thakur 👻" <akankit114@gmail.com>', // Sender's email address
+      to: user.email, // Receiver's email address
+      subject: "New Ticket Created",
+      html: `
+        <p>Hello,${user.firstName}</p>
+        <p>A new ticket with ID ${newTicket.ticketId} has been created.</p>
+        <p>Visit the app to view the ticket details.</p>
+      `,
+    };
+
+    //Transporter Object
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error);
+      } else {
+        console.log("Email sent:", info.response);
+      }
+    });
+
+    // status code/response
     res.status(201).json({ msg: "success", id: newTicket.ticketId });
   } catch (error) {
     console.error("Error creating ticket:", error);
@@ -178,6 +214,29 @@ const deleteMultipleTicketsByIds = async (req, res) => {
   }
 };
 
+// Get Ticket By User Id
+const getTicketsByUserId = async (req, res) => {
+  console.log(req.query);
+  const userId = req.query.userId; // Get user ID from query parameter
+  console.log(userId);
+  try {
+    // Fetch user based on userId
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Fetch tickets associated with the user
+    const tickets = await Ticket.find({
+      "createdBy.employeeId": user.employeeCode,
+    });
+
+    res.status(200).json(tickets);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch tickets" });
+  }
+};
+
 module.exports = {
   getAllTickets,
   createTicket,
@@ -185,6 +244,7 @@ module.exports = {
   updateTicketById,
   deleteTicketById,
   deleteMultipleTicketsByIds,
+  getTicketsByUserId,
 };
 
 // req.body, {

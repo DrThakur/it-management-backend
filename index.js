@@ -8,6 +8,8 @@ const assetRouter = require("./routes/asset");
 const multer = require("multer");
 const { body, validationResult } = require("express-validator");
 const { handleCSVdataToDatabase } = require("./controllers/asset");
+const { handleUserCSVdataToDatabase } = require("./controllers/user");
+const { getTicketsByUserId } = require("./controllers/ticket");
 const {
   checkForAuthenticationCookie,
 } = require("./middlewares/authentication");
@@ -45,12 +47,12 @@ const multerFilter = (req, file, cb) => {
 
 // mongodb+srv://drankitkumarthakur:MtcJwiuDf27C4Ny8@cluster0.k8wu6dh.mongodb.net/?retryWrites=true&w=majority
 // Connection
-// connectToMongoDb("mongodb://127.0.0.1:27017").then(() =>
-//   console.log("MongoDb Connected!")
-// );
-connectToMongoDb(
-  "mongodb+srv://drankitkumarthakur:MtcJwiuDf27C4Ny8@cluster0.k8wu6dh.mongodb.net/?retryWrites=true&w=majority"
-).then(() => console.log("MongoDb Connected!"));
+connectToMongoDb("mongodb://127.0.0.1:27017/test").then(() =>
+  console.log("MongoDb Connected!")
+);
+// connectToMongoDb(
+//   "mongodb+srv://drankitkumarthakur:MtcJwiuDf27C4Ny8@cluster0.k8wu6dh.mongodb.net/?retryWrites=true&w=majority"
+// ).then(() => console.log("MongoDb Connected!"));
 
 // View Engine Declaration
 app.set("view engine", "ejs");
@@ -77,6 +79,11 @@ app.use("/assets", assetRouter);
 
 // Upload file
 app.post("/assets/importFile", upload.single("file"), handleCSVdataToDatabase);
-app.post("/users/importFile", upload.single("file"), handleCSVdataToDatabase);
+app.post(
+  "/users/importFile",
+  upload.single("file"),
+  handleUserCSVdataToDatabase
+);
+app.get("/ticketByUserId", getTicketsByUserId);
 
 app.listen(PORT, () => console.log(`Server started at PORT : ${PORT}`));

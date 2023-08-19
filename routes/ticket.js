@@ -7,6 +7,7 @@ const {
   updateTicketById,
   deleteTicketById,
   deleteMultipleTicketsByIds,
+  getTicketsByUserId,
 } = require("../controllers/ticket");
 
 router
@@ -20,5 +21,7 @@ router
   .get(getTicketById)
   .patch(updateTicketById)
   .delete(deleteTicketById);
+
+
 
 module.exports = router;
