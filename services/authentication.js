@@ -5,8 +5,7 @@ const secret = "$uper#lft456Man$piderMonkey@2580";
 function createTokenForUser(user) {
   const payload = {
     _id: user._id,
-    firstName: user.firstName,
-    lastName: user.lastName,
+    fullName: user.fullName,
     email: user.email,
     phoneNumber: user.phoneNumber,
     profileImageURL: user.profileImageURL,

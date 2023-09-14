@@ -9,6 +9,11 @@ const ticketSchema = new mongoose.Schema(
     ticketId: {
       type: String,
     },
+    location: {
+      type: String,
+      required: true,
+      enum: ["Gurgaon", "Bangalore", "Hyderabad", "Other"],
+    },
     requestType: {
       type: String,
       required: true,
@@ -36,8 +41,11 @@ const ticketSchema = new mongoose.Schema(
         "Accessories",
         "Consumables",
         "Licence",
-        "Other",
+        "Others",
       ],
+    },
+    quantity: {
+      type: Number,
     },
     requirementDetails: {
       type: String,
@@ -55,32 +63,41 @@ const ticketSchema = new mongoose.Schema(
         );
       },
     },
+    reportingManager: {
+      type: String,
+      required: function () {
+        return this.assetRequiredFor === "Self";
+      },
+    },
+    projectName: {
+      type: String,
+      required: function () {
+        return this.assetRequiredFor === "Project";
+      },
+    },
+    projectDuration: {
+      type: String,
+      required: function () {
+        return this.assetRequiredFor === "Project";
+      },
+    },
     approvedByManager: {
       type: String,
-      required: function () {
-        return (
-          this.requestType === "Request Something" &&
-          (this.assetRequiredFor === "Self" ||
-            this.assetRequiredFor === "Project") &&
-          (this.requestFor === "Laptop" ||
-            this.requestFor === "Dekstop" ||
-            this.requestFor === "Accessories" ||
-            this.requestFor === "Consumables" ||
-            this.requestFor === "Licence" ||
-            this.requestFor === "Other") &&
-          this.requirementDetails &&
-          this.requirementDetails.trim() !== ""
-        );
-      },
-      enum: ["Yes", "No"],
+      default: "Awaited",
+      enum: ["Yes", "No", "Awaited"],
     },
-    managerName: {
+    approvedBy: {
+      type: String,
+    },
+    approvedOn: {
+      type: Date, // Store the approval date and time as a Date object
+    },
+    projectManagerName: {
       type: String,
       required: function () {
         return (
           this.requestType === "Request Something" &&
-          (this.assetRequiredFor === "Self" ||
-            this.assetRequiredFor === "Project") &&
+          this.assetRequiredFor === "Project" &&
           (this.requestFor === "Laptop" ||
             this.requestFor === "Dekstop" ||
             this.requestFor === "Accessories" ||
@@ -89,7 +106,8 @@ const ticketSchema = new mongoose.Schema(
             this.requestFor === "Other") &&
           this.requirementDetails &&
           this.requirementDetails.trim() !== "" &&
-          this.approvedByManager === "Yes"
+          this.projectName &&
+          this.projectDuration
         );
       },
     },
@@ -113,24 +131,69 @@ const ticketSchema = new mongoose.Schema(
     },
     priority: {
       type: String,
-      enum: ["High Priority", "Medium Priority", "Low Priority"],
+      enum: ["High", "Medium", "Low"],
       required: true,
     },
     status: {
       type: String,
-      enum: ["New", "Pending", "Resolved"],
+      enum: ["New", "Open", "Pending", "Resolved", "Closed"],
       default: "New",
     },
     createdBy: {
-      name: { type: String, default: "Ankit Kumar Thakur" },
-      employeeId: { type: String, default: "000" },
-      profilePicture: { type: String, default: "/images/profile_image.jpg" },
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User", // Reference the User collection
+        required: true,
+      },
+      fullName: { type: String, required: true },
+      employeeCode: { type: String, required: true },
+      email: { type: String, required: true },
+      profileImageURL: { type: String, default: "/images/profile_image.jpg" },
     },
     assignedTo: {
-      name: { type: String, default: "UnAssigned" },
-      employeeId: { type: String, default: "000" },
-      profilePicture: { type: String, default: "/images/profile_image.jpg" },
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User", // Reference the User collection
+        default: null, // Initialize as empty if not assigned yet
+      },
+      fullName: { type: String },
+      employeeCode: { type: String },
+      email: { type: String },
+      profileImageURL: { type: String },
     },
+    members: {
+      type: [String],
+    },
+    sla: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SLA", // Reference to the SLA model
+    },
+    responseTime: {
+      type: Date,
+    },
+
+    resolutionDueDate: {
+      type: Date,
+    },
+    closedDate: {
+      type: Date,
+    },
+    closedBy: {
+      type: String,
+    },
+
+    statusHistory: [
+      {
+        status: {
+          type: String,
+          enum: ["New", "Open", "Pending", "Resolved", "Closed"],
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -5,17 +5,14 @@ const { roles } = require("../services/constants");
 //Schema
 const userSchema = new mongoose.Schema(
   {
-    firstName: {
-      type: String,
-      required: true,
-    },
-    lastName: {
+    fullName: {
       type: String,
       required: true,
     },
     username: {
       type: String,
       required: true,
+      unique: true,
     },
     email: {
       type: String,
@@ -31,11 +28,11 @@ const userSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      required: true,
+      default: "N/A",
     },
     status: {
       type: String,
-      enum: ["Active", "Inactive"],
+      enum: ["Active", "Left"],
       default: "Active",
     },
     profileImageURL: {
@@ -67,8 +64,8 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: [roles.superAdmin, roles.admin, roles.staff],
-      default: roles.staff,
+      enum: [roles.administrator, roles.technician, roles.user],
+      default: roles.user,
     },
   },
   { timestamps: true }
@@ -87,7 +84,7 @@ userSchema.pre("save", function (next) {
   this.salt = salt;
   this.password = hashedPassword;
   if (this.email === process.env.ADMIN_EMAIL.toLowerCase()) {
-    this.role = roles.superAdmin;
+    this.role = roles.administrator;
   }
 
   next();
@@ -96,6 +93,8 @@ userSchema.pre("save", function (next) {
 userSchema.static(
   "matchPasswordAndGenerateToken",
   async function (email, password) {
+    console.log("user email", email);
+    console.log("Password", password);
     const user = await this.findOne({ email });
     if (!user) throw new Error("user not found");
 
@@ -110,6 +109,7 @@ userSchema.static(
       throw new Error("Incorrect Password");
 
     const token = createTokenForUser(user);
+    console.log("My match password tokem", token);
     return token;
   }
 );

@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const User = require("../models/user");
 const csvParser = require("csv-parser");
 const fs = require("fs");
@@ -17,8 +18,7 @@ const createUser = async (req, res) => {
   try {
     console.log("Body", body);
     if (
-      !body.firstName ||
-      !body.lastName ||
+      !body.fullName ||
       !body.username ||
       !body.email ||
       !body.password ||
@@ -28,8 +28,7 @@ const createUser = async (req, res) => {
       !body.designation ||
       !body.reportingManager ||
       !body.department ||
-      !body.location ||
-      !body.notes
+      !body.location
     ) {
       return res.status(400).json({
         status: "error",
@@ -222,8 +221,7 @@ const handleUserCSVdataToDatabase = async (req, res) => {
     const jsonArray = [];
     // Map the CSV column headers to the Mongoose field names
     const fieldMappings = {
-      "First Name": "firstName",
-      "Last Name": "lastName",
+      "Full Name": "fullName",
       Username: "username",
       Email: "email",
       Password: "password",
@@ -247,6 +245,7 @@ const handleUserCSVdataToDatabase = async (req, res) => {
             mappedRow[fieldMappings[key]] = row[key];
           }
         }
+        console.log("Mapped Row:", mappedRow);
         jsonArray.push(mappedRow);
       })
       .on("end", async () => {
@@ -262,6 +261,62 @@ const handleUserCSVdataToDatabase = async (req, res) => {
   }
 };
 
+const handleProfileImageUpload = async (req, res) => {
+  console.log("My Prfile User id", req.file);
+  console.log("My Prfile User id", req.user);
+  try {
+    const userId = req.user._id; // Get user ID from the session or token
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.profileImageURL = `/images/profiles/${req.file.filename}`;
+    await user.save();
+
+    res.status(200).json({ message: "Profile image updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update profile image" });
+  }
+};
+
+// Function to fetch user IDs by email
+async function fetchUserIdsByEmails(emails) {
+  try {
+    const userIds = await User.distinct("_id", { email: { $in: emails } });
+    return userIds;
+  } catch (error) {
+    console.error("Error fetching user IDs by email:", error);
+    throw error;
+  }
+}
+
+const getAllUsersByIds = async (req, res) => {
+  try {
+    const { userIds } = req.query;
+
+    // console.log("My users IDsssss", userIds);
+
+    // Convert userIds to an array of ObjectId
+    const userIdObjects = userIds.map(
+      (userId) => new mongoose.Types.ObjectId(userId)
+    );
+
+    // console.log("My userObhstec ids,..", userIdObjects);
+
+    // Query user details by user IDs
+    const users = await User.find({ _id: { $in: userIdObjects } });
+
+    // console.log("my find uaers meneters", users);
+    res.json(users);
+  } catch (error) {
+    console.error("Error fetching user details by user IDs:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   getAllUsers,
   createUser,
@@ -270,6 +325,9 @@ module.exports = {
   deleteUserById,
   deleteMultipleUsersByIds,
   handleUserCSVdataToDatabase,
+  handleProfileImageUpload,
+  fetchUserIdsByEmails,
+  getAllUsersByIds,
 };
 
 // if (!body) {
