@@ -24,7 +24,7 @@ const {
 const transporter = require("./services/nodemailerConfig");
 
 const {
-  checkForAuthenticationCookie,
+  checkForAuthenticationCookie
 } = require("./middlewares/authentication");
 require("dotenv").config();
 const cors = require("cors");
@@ -86,12 +86,12 @@ const multerFilter = (req, file, cb) => {
 
 // mongodb+srv://drankitkumarthakur:MtcJwiuDf27C4Ny8@cluster0.k8wu6dh.mongodb.net/?retryWrites=true&w=majority
 // Connection
-connectToMongoDb("mongodb://127.0.0.1:27017/test").then(() =>
-  console.log("MongoDb Connected!")
-);
-// connectToMongoDb(
-//   "mongodb+srv://drankitkumarthakur:MtcJwiuDf27C4Ny8@cluster0.k8wu6dh.mongodb.net/?retryWrites=true&w=majority"
-// ).then(() => console.log("MongoDb Connected!"));
+// connectToMongoDb("mongodb://127.0.0.1:27017/test").then(() =>
+//   console.log("MongoDb Connected!")
+// );
+connectToMongoDb(
+  "mongodb+srv://drankitkumarthakur:Ankit%40258011@cluster0.gfwgbvb.mongodb.net/itmanagement"
+).then(() => console.log("MongoDb Connected on Cloud!"));
 
 // View Engine Declaration
 app.set("view engine", "ejs");
@@ -170,7 +170,7 @@ io.on("connection", (socket) => {
 app.use("/tickets", ticketRouter);
 
 // Handle requests on User
-app.use("/users", userRouter);
+app.use("/users",  userRouter);
 
 // Handle requests on Assets
 app.use("/assets", assetRouter);

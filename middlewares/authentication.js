@@ -14,10 +14,11 @@ function checkForAuthenticationCookie(cookieName) {
       // res.send("Error Occured", error);
       res.status(401).send("Authentication Error: " + error.message);
     }
+    console.log("My requested user", req.user)
     return next();
   };
 }
 
 module.exports = {
-  checkForAuthenticationCookie,
+  checkForAuthenticationCookie
 };

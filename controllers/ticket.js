@@ -41,7 +41,7 @@ const createTicket = async (req, res) => {
 
   try {
     // Validate if requestType is provided
-    const defaultSLAId = "64ffff04f05b946ef4bfd748";
+    const defaultSLAId = "652cfb678281d7ce37e35dc8";
 
     if (!body.requestType) {
       return res
