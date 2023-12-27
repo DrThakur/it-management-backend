@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { createHmac, randomBytes } = require("crypto");
+const { createHmac, randomBytes, createHash } = require("crypto");
 const { createTokenForUser } = require("../services/authentication");
 const { roles } = require("../services/constants");
 //Schema
@@ -67,7 +67,10 @@ const userSchema = new mongoose.Schema(
       enum: [roles.administrator, roles.technician, roles.user],
       default: roles.user,
     },
+    passwordResetToken:{ type:String},
+    passwordResetTokenExpires:{ type: Date},
   },
+  
   { timestamps: true }
 );
 
@@ -113,6 +116,27 @@ userSchema.static(
     return token;
   }
 );
+
+
+const generateRandomCode = (length) => {
+  const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+};
+
+
+ userSchema.methods.createResetPasswordToken = function() {
+  const resetToken = generateRandomCode(16);
+
+  this.passwordResetToken= createHash('sha256').update(resetToken).digest('hex');
+  this.passwordResetTokenExpires = Date.now()+ 10*60*1000;
+
+  console.log(resetToken, this.passwordResetToken)
+  return resetToken;
+}
 
 // Model
 const User = mongoose.model("user", userSchema);

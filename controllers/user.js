@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
+const crypto = require('crypto');
 const User = require("../models/user");
+const nodemailer = require('nodemailer');
 const csvParser = require("csv-parser");
 const fs = require("fs");
 // Get all users
@@ -317,6 +319,58 @@ const getAllUsersByIds = async (req, res) => {
   }
 };
 
+const handlePasswordRest=async (req, res) => {
+  try {
+    const { email } = req.body;
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetExpires = Date.now() + 3600000; // 1 hour expiration
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpires = resetExpires;
+    await user.save();
+
+    // Send a password reset email to the user with a link like:
+    // http://yourwebsite.com/reset-password?token=resetToken
+
+    // ... (your email sending logic)
+
+    res.status(200).json({ message: 'Password reset email sent.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to send password reset email' });
+  }
+}
+
+const forgotPassword = async (req, res)=> {
+
+  // 1. extract email from req.body
+    const email =req.body.email ;
+
+    //2. Find user from email from DB
+    const user = await User.findOne({email})
+
+    //3. Check if the user exist or not
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    //4. If user exist generate a random token using randomBytes or bcrypt
+  const resetToken= user.createResetPasswordToken()
+    // 5. Save that token in user Schema and update the user with token/code generated
+   await user.save()
+    //6. Send that token back to email of the user
+
+}
+
+const resetPassword = async (req, res)=> {}
+
+
+
 module.exports = {
   getAllUsers,
   createUser,
@@ -328,6 +382,8 @@ module.exports = {
   handleProfileImageUpload,
   fetchUserIdsByEmails,
   getAllUsersByIds,
+  forgotPassword,
+  resetPassword
 };
 
 // if (!body) {

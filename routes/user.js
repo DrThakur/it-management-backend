@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
-
+const {
+  checkForUserRole
+ } = require("../middlewares/authentication");
 const {
   getAllUsers,
   createUser,
@@ -10,6 +12,11 @@ const {
   deleteUserById,
   deleteMultipleUsersByIds,
   getAllUsersByIds,
+  handleForgotPassword,
+  handleResetPassword,
+  forgotPassword,
+  resetPassword,
+  forgetPassword,
 } = require("../controllers/user");
 
 // Login route
@@ -54,6 +61,10 @@ router
   .get(getUserById)
   .patch(updateUserById)
   .delete(deleteUserById);
+
+router.route("/forgot-password").post(forgotPassword);
+router.route("/reset-password").patch(resetPassword);
+
 
 module.exports = router;
 
